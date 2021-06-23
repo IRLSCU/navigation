@@ -91,6 +91,7 @@ namespace dwa_local_planner {
 
   }
 
+  //在move_base中创立对象并初始化
   void DWAPlannerROS::initialize(
       std::string name,
       tf::TransformListener* tf,
@@ -107,6 +108,7 @@ namespace dwa_local_planner {
       // make sure to update the costmap we'll use for this cycle
       costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
 
+      //对base_local_planner::LocalPlannerUtil对象进行初始化
       planner_util_.initialize(tf, costmap, costmap_ros_->getGlobalFrameID());
 
       //create the actual planner that we'll use.. it'll configure itself from the parameter server
@@ -271,6 +273,7 @@ namespace dwa_local_planner {
     ROS_DEBUG_NAMED("dwa_local_planner", "Received a transformed plan with %zu points.", transformed_plan.size());
 
     // update plan in dwa_planner even if we just stop and rotate, to allow checkTrajectory
+    //getRobotFootprint(): 获取机器人边界（在机器人坐标系下，包含padding）
     dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan, costmap_ros_->getRobotFootprint());
 
     if (latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {

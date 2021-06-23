@@ -115,6 +115,7 @@ namespace dwa_local_planner {
 
   }
 
+  //在dwa_planner_ros.cpp中创建对象
   DWAPlanner::DWAPlanner(std::string name, base_local_planner::LocalPlannerUtil *planner_util) :
       planner_util_(planner_util),
       obstacle_costs_(planner_util->getCostmap()),
@@ -239,7 +240,13 @@ namespace dwa_local_planner {
     return false;
   }
 
-
+  /**
+   * @brief 
+   * 
+   * @param global_pose 机器人当前位姿
+   * @param new_plan 局部规划器填充的plan点
+   * @param footprint_spec 机器人边界
+   */
   void DWAPlanner::updatePlanAndLocalCosts(
       tf::Stamped<tf::Pose> global_pose,
       const std::vector<geometry_msgs::PoseStamped>& new_plan,
@@ -258,7 +265,7 @@ namespace dwa_local_planner {
     goal_costs_.setTargetPoses(global_plan_);
 
     // alignment costs
-    geometry_msgs::PoseStamped goal_pose = global_plan_.back();
+    geometry_msgs::PoseStamped goal_pose = global_plan_.back(); //返回最后一个元素，局部要走到的目标点
 
     Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
     double sq_dist =
@@ -271,6 +278,8 @@ namespace dwa_local_planner {
     // turning towards goal orientation causes instability when the
     // robot needs to make a 180 degree turn at the end
     std::vector<geometry_msgs::PoseStamped> front_global_plan = global_plan_;
+
+    //与水平方向的夹角弧度
     double angle_to_goal = atan2(goal_pose.pose.position.y - pos[1], goal_pose.pose.position.x - pos[0]);
     front_global_plan.back().pose.position.x = front_global_plan.back().pose.position.x +
       forward_point_distance_ * cos(angle_to_goal);

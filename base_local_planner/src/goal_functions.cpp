@@ -103,9 +103,13 @@ namespace base_local_planner {
     try {
       // get plan_to_global_transform from plan frame to global_frame
       tf::StampedTransform plan_to_global_transform;
+
+      //等待坐标系转换
       tf.waitForTransform(global_frame, ros::Time::now(),
                           plan_pose.header.frame_id, plan_pose.header.stamp,
                           plan_pose.header.frame_id, ros::Duration(0.5));
+      
+      //坐标系转换
       tf.lookupTransform(global_frame, ros::Time(),
                          plan_pose.header.frame_id, plan_pose.header.stamp, 
                          plan_pose.header.frame_id, plan_to_global_transform);
@@ -114,6 +118,7 @@ namespace base_local_planner {
       tf::Stamped<tf::Pose> robot_pose;
       tf.transformPose(plan_pose.header.frame_id, global_pose, robot_pose);
 
+      //resolution:每一像素代表的地图单位 x*resolution/2即x轴边长
       //we'll discard points on the plan that are outside the local costmap
       double dist_threshold = std::max(costmap.getSizeInCellsX() * costmap.getResolution() / 2.0,
                                        costmap.getSizeInCellsY() * costmap.getResolution() / 2.0);

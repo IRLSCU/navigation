@@ -41,6 +41,13 @@
 
 namespace base_local_planner {
 
+/**
+ * @brief 在dwa_planner_ros.cpp中创建对象并初始化
+ * 
+ * @param tf 坐标转换关系 tf::TransformListener* tf
+ * @param costmap 所使用的代价地图 costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
+ * @param global_frame 全局坐标系标签 costmap_ros_->getGlobalFrameID()
+ */
 void LocalPlannerUtil::initialize(
     tf::TransformListener* tf,
     costmap_2d::Costmap2D* costmap,
@@ -102,6 +109,13 @@ bool LocalPlannerUtil::setPlan(const std::vector<geometry_msgs::PoseStamped>& or
   return true;
 }
 
+/**
+ * @brief 
+ * 
+ * @param global_pose 机器人全局下的当前位姿 costmap_ros_->getRobotPose(current_pose_)
+ * @param transformed_plan 
+ * @return bool 
+ */
 bool LocalPlannerUtil::getLocalPlan(tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& transformed_plan) {
   //get the global plan in our frame
   if(!base_local_planner::transformGlobalPlan(

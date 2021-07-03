@@ -241,7 +241,7 @@ namespace dwa_local_planner {
   }
 
   /**
-   * @brief 
+   * @brief 给代价地图设置目标点
    * 
    * @param global_pose 机器人当前位姿
    * @param new_plan 局部规划器填充的plan点
@@ -259,15 +259,19 @@ namespace dwa_local_planner {
     obstacle_costs_.setFootprint(footprint_spec);
 
     // costs for going away from path
+    //设定局部global path的终点为目标，初始scale值=resolution * pdist_scale_ * 0.5
     path_costs_.setTargetPoses(global_plan_);
 
     // costs for not going towards the local goal as much as possible
+    //设定局部global path的终点为目标，初始scale值=resolution * pdist_scale_ * 0.5
     goal_costs_.setTargetPoses(global_plan_);
 
     // alignment costs
     geometry_msgs::PoseStamped goal_pose = global_plan_.back(); //返回最后一个元素，局部要走到的目标点
 
     Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
+    
+    //当前位置到目标点的距离的平方
     double sq_dist =
         (pos[0] - goal_pose.pose.position.x) * (pos[0] - goal_pose.pose.position.x) +
         (pos[1] - goal_pose.pose.position.y) * (pos[1] - goal_pose.pose.position.y);
@@ -286,6 +290,7 @@ namespace dwa_local_planner {
     front_global_plan.back().pose.position.y = front_global_plan.back().pose.position.y + forward_point_distance_ *
       sin(angle_to_goal);
 
+    //设定局部forward_point_distance_的点为目标，初始scale值=resolution * pdist_scale_ * 0.5
     goal_front_costs_.setTargetPoses(front_global_plan);
     
     // keeping the nose on the path
@@ -293,6 +298,7 @@ namespace dwa_local_planner {
       double resolution = planner_util_->getCostmap()->getResolution();
       alignment_costs_.setScale(resolution * pdist_scale_ * 0.5);
       // costs for robot being aligned with path (nose on path, not ju
+      //设定局部global path的终点为目标
       alignment_costs_.setTargetPoses(global_plan_);
     } else {
       // once we are close to goal, trying to keep the nose close to anything destabilizes behavior.

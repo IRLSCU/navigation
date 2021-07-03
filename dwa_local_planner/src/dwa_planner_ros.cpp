@@ -177,7 +177,13 @@ namespace dwa_local_planner {
   }
 
 
-
+  /**
+   * @brief 
+   * 
+   * @param global_pose 机器人当前位姿
+   * @param cmd_vel 要输出的速度控制指令
+   * @return bool 
+   */
   bool DWAPlannerROS::dwaComputeVelocityCommands(tf::Stamped<tf::Pose> &global_pose, geometry_msgs::Twist& cmd_vel) {
     // dynamic window sampling approach to get useful velocity commands
     if(! isInitialized()){
@@ -260,6 +266,7 @@ namespace dwa_local_planner {
       return false;
     }
     std::vector<geometry_msgs::PoseStamped> transformed_plan;
+    //基于全局路径截取路径，并填充到transformed_plan中，同时将全局轨迹点转换到代价地图的坐标系下
     if ( ! planner_util_.getLocalPlan(current_pose_, transformed_plan)) {
       ROS_ERROR("Could not get local plan");
       return false;
@@ -274,6 +281,7 @@ namespace dwa_local_planner {
 
     // update plan in dwa_planner even if we just stop and rotate, to allow checkTrajectory
     //getRobotFootprint(): 获取机器人边界（在机器人坐标系下，包含padding）
+    //为地图代价函数设置目标点，初始化
     dp_->updatePlanAndLocalCosts(current_pose_, transformed_plan, costmap_ros_->getRobotFootprint());
 
     if (latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {

@@ -178,6 +178,15 @@ namespace base_local_planner {
     return true;
   }
 
+  /**
+   * @brief Get the Goal Pose object
+   * 
+   * @param tf 坐标系转换关系
+   * @param global_plan 规划出的全局路径
+   * @param global_frame 代价地图坐标系全局id
+   * @param goal_pose 待赋值的局部目标点位姿
+   * @return bool 
+   */
   bool getGoalPose(const tf::TransformListener& tf,
       const std::vector<geometry_msgs::PoseStamped>& global_plan,
       const std::string& global_frame, tf::Stamped<tf::Pose>& goal_pose) {
@@ -198,6 +207,7 @@ namespace base_local_planner {
                          plan_goal_pose.header.frame_id, transform);
 
       poseStampedMsgToTF(plan_goal_pose, goal_pose);
+      //
       goal_pose.setData(transform * goal_pose);
       goal_pose.stamp_ = transform.stamp_;
       goal_pose.frame_id_ = global_frame;

@@ -39,7 +39,7 @@ LatchedStopRotateController::~LatchedStopRotateController() {}
  */
 bool LatchedStopRotateController::isPositionReached(LocalPlannerUtil* planner_util,
     tf::Stamped<tf::Pose> global_pose) {
-  double xy_goal_tolerance = planner_util->getCurrentLimits().xy_goal_tolerance;
+  double xy_goal_tolerance = planner_util->getCurrentLimits().xy_goal_tolerance; //获取与目标点在xy平面内的可容忍误差
 
   //we assume the global goal is the last point in the global plan
   tf::Stamped<tf::Pose> goal_pose;
@@ -51,6 +51,8 @@ bool LatchedStopRotateController::isPositionReached(LocalPlannerUtil* planner_ut
   double goal_y = goal_pose.getOrigin().getY();
 
   //check to see if we've reached the goal position
+  //一般都为false，如果为true是什么意思呢？就是当进入xy_goal_tolerance范围内后会设置一个锁
+  //此后即使在旋转调整yaw的过程中跳出xy_goal_tolerance，也不会进行xy上的调整。
   if ((latch_xy_goal_tolerance_ && xy_tolerance_latch_) ||
       base_local_planner::getGoalPositionDistance(global_pose, goal_x, goal_y) <= xy_goal_tolerance) {
     xy_tolerance_latch_ = true;

@@ -46,7 +46,7 @@ namespace base_local_planner {
  * 
  * @param tf 坐标转换关系 tf::TransformListener* tf
  * @param costmap 所使用的代价地图 costmap_2d::Costmap2D* costmap = costmap_ros_->getCostmap();
- * @param global_frame 全局坐标系标签 costmap_ros_->getGlobalFrameID()
+ * @param global_frame 代价地图坐标系全局标签 costmap_ros_->getGlobalFrameID()
  */
 void LocalPlannerUtil::initialize(
     tf::TransformListener* tf,

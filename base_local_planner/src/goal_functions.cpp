@@ -42,6 +42,12 @@ namespace base_local_planner {
     return hypot(goal_x - global_pose.getOrigin().x(), goal_y - global_pose.getOrigin().y());
   }
 
+  /**
+   * @brief 获取小车当前位资与目标点位资的偏移角
+   * @param  global_pose      小车当前位资
+   * @param  goal_th          目标点位资的角度
+   * @return double 
+   */
   double getGoalOrientationAngleDifference(const tf::Stamped<tf::Pose>& global_pose, double goal_th) {
     double yaw = tf::getYaw(global_pose.getRotation());
     return angles::shortest_angular_distance(yaw, goal_th);
@@ -179,7 +185,7 @@ namespace base_local_planner {
   }
 
   /**
-   * @brief Get the Goal Pose object
+   * @brief 返回最后一个位资
    * 
    * @param tf 坐标系转换关系
    * @param global_plan 规划出的全局路径
@@ -195,9 +201,10 @@ namespace base_local_planner {
       ROS_ERROR("Received plan with zero length");
       return false;
     }
-
+    //获取跟随的plan的最后一个位资
     const geometry_msgs::PoseStamped& plan_goal_pose = global_plan.back();
     try{
+      //进行位资的坐标系转换
       tf::StampedTransform transform;
       tf.waitForTransform(global_frame, ros::Time::now(),
                           plan_goal_pose.header.frame_id, plan_goal_pose.header.stamp,

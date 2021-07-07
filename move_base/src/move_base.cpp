@@ -34,7 +34,7 @@
 *
 * Author: Eitan Marder-Eppstein
 *         Mike Phillips (put the planner in its own thread)
-*********************************************************************/
+*********************************************************************/ 
 #include <move_base/move_base.h>
 #include <cmath>
 
@@ -870,7 +870,7 @@ namespace move_base {
     as_->publishFeedback(feedback);
 
     //计算当前位置与上次震荡位置的距离
-    //如果大于设置的参数值，则修改正当位置为震荡位置
+    //如果大于设置的参数值，则修改当前位置为震荡位置
     //check to see if we've moved far enough to reset our oscillation timeout
     if(distance(current_position, oscillation_pose_) >= oscillation_distance_)
     {

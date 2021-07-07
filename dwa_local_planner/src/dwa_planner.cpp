@@ -133,6 +133,9 @@ namespace dwa_local_planner {
     //just do an upward search for the frequency at which its being run. This
     //also allows the frequency to be overwritten locally.
     std::string controller_frequency_param_name;
+
+    // 设置局部规划器前向模拟时间
+    // 通过getSimPeriod()函数返回 
     if(!private_nh.searchParam("controller_frequency", controller_frequency_param_name)) {
       sim_period_ = 0.05;
     } else {

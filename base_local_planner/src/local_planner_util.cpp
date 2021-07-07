@@ -86,7 +86,12 @@ LocalPlannerLimits LocalPlannerUtil::getCurrentLimits() {
   return limits_;
 }
 
-
+/**
+ * @brief 获取目标点位资
+ * @param  goal_pose        待赋值的局部目标点位姿
+ * @return true 
+ * @return false 
+ */
 bool LocalPlannerUtil::getGoal(tf::Stamped<tf::Pose>& goal_pose) {
   //we assume the global goal is the last point in the global plan
   return base_local_planner::getGoalPose(*tf_,

@@ -257,8 +257,12 @@ namespace dwa_local_planner {
   }
 
 
-
-
+  /**
+   * @brief 计算速度控制指令
+   * @param  cmd_vel          存储速度控制指令
+   * @return true 
+   * @return false 
+   */
   bool DWAPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel) {
     // dispatches to either dwa sampling control or stop and rotate control, depending on whether we have been close enough to goal
     if ( ! costmap_ros_->getRobotPose(current_pose_)) {
@@ -290,16 +294,17 @@ namespace dwa_local_planner {
       std::vector<geometry_msgs::PoseStamped> transformed_plan;
       publishGlobalPlan(transformed_plan);
       publishLocalPlan(local_plan);
-      base_local_planner::LocalPlannerLimits limits = planner_util_.getCurrentLimits();
+      base_local_planner::LocalPlannerLimits limits = planner_util_.getCurrentLimits();　//获得参数配置信息
       return latchedStopRotateController_.computeVelocityCommandsStopRotate(
           cmd_vel,
-          limits.getAccLimits(),
-          dp_->getSimPeriod(),
-          &planner_util_,
-          odom_helper_,
-          current_pose_,
-          boost::bind(&DWAPlanner::checkTrajectory, dp_, _1, _2, _3));
-    } else {
+          limits.getAccLimits(),　// 获取机器人的加速度限制
+          dp_->getSimPeriod(),　// 获取机器人前向模拟时间
+          &planner_util_,　// ase_local_planner::LocalPlannerUtil对象
+          odom_helper_,　// base_local_planner::OdometryHelperRos对象，初始为"odom"
+          current_pose_, // 当前小车的位资
+          //_1, _2, _3分别对应第一、第二、第三位置上的参数
+          boost::bind(&DWAPlanner::checkTrajectory, dp_, _1, _2, _3)); //绑定boost::function　obstacle_check()
+    } else {　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　//调用obstacle_check()时，实则调用dp_->checkTrajectory(,,);
       bool isOk = dwaComputeVelocityCommands(current_pose_, cmd_vel);
       if (isOk) {
         publishGlobalPlan(transformed_plan);

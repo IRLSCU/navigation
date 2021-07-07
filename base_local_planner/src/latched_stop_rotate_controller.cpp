@@ -110,6 +110,17 @@ bool LatchedStopRotateController::isGoalReached(LocalPlannerUtil* planner_util,
   return false;
 }
 
+/**
+ * @brief 
+ * @param  global_pose      小车当前位资
+ * @param  robot_vel        小车当前速度
+ * @param  cmd_vel          待计算的小车速度控制指令
+ * @param  acc_lim          小车加速度限制
+ * @param  sim_period       前向模拟时间
+ * @param  obstacle_check   回调函数
+ * @return true 
+ * @return false 
+ */
 bool LatchedStopRotateController::stopWithAccLimits(const tf::Stamped<tf::Pose>& global_pose,
     const tf::Stamped<tf::Pose>& robot_vel,
     geometry_msgs::Twist& cmd_vel,
@@ -199,23 +210,36 @@ bool LatchedStopRotateController::rotateToGoal(
 
 }
 
+/**
+ * @brief 
+ * @param  cmd_vel          待输出的速度控制指令
+ * @param  acc_lim          小车加速度限制
+ * @param  sim_period       前向模拟时间
+ * @param  planner_util     ase_local_planner::LocalPlannerUtil对象
+ * @param  odom_helper_     base_local_planner::OdometryHelperRos对象，初始为"odom"
+ * @param  global_pose      小车当前位资
+ * @param  obstacle_check   回调函数，实则调用dp_->checkTrajectory(,,);
+ * @return true 
+ * @return false 
+ */
 bool LatchedStopRotateController::computeVelocityCommandsStopRotate(geometry_msgs::Twist& cmd_vel,
     Eigen::Vector3f acc_lim,
     double sim_period,
     LocalPlannerUtil* planner_util,
     OdometryHelperRos& odom_helper_,
     tf::Stamped<tf::Pose> global_pose,
-    boost::function<bool (Eigen::Vector3f pos,
-                          Eigen::Vector3f vel,
-                          Eigen::Vector3f vel_samples)> obstacle_check) {
+    boost::function<bool (Eigen::Vector3f pos, // 对应_1
+                          Eigen::Vector3f vel, // 对应_2
+                          Eigen::Vector3f vel_samples /* 对应_3*/)> obstacle_check) {
   //we assume the global goal is the last point in the global plan
   tf::Stamped<tf::Pose> goal_pose;
+  //获取局部目标点位姿
   if ( ! planner_util->getGoal(goal_pose)) {
     ROS_ERROR("Could not get goal pose");
     return false;
   }
 
-  base_local_planner::LocalPlannerLimits limits = planner_util->getCurrentLimits();
+  base_local_planner::LocalPlannerLimits limits = planner_util->getCurrentLimits();　//获得参数配置信息
 
   //if the user wants to latch goal tolerance, if we ever reach the goal location, we'll
   //just rotate in place
@@ -224,9 +248,11 @@ bool LatchedStopRotateController::computeVelocityCommandsStopRotate(geometry_msg
     xy_tolerance_latch_ = true;
   }
   //check to see if the goal orientation has been reached
-  double goal_th = tf::getYaw(goal_pose.getRotation());
+  double goal_th = tf::getYaw(goal_pose.getRotation());　//获得目标点位资的角度
+  //获取小车当前位资与目标点位资的角度偏移
   double angle = base_local_planner::getGoalOrientationAngleDifference(global_pose, goal_th);
-  if (fabs(angle) <= limits.yaw_goal_tolerance) {
+
+  if (fabs(angle) <= limits.yaw_goal_tolerance) {　//角度差在可容忍范围内，则直接发布０速度指令
     //set the velocity command to zero
     cmd_vel.linear.x = 0.0;
     cmd_vel.linear.y = 0.0;
@@ -235,6 +261,8 @@ bool LatchedStopRotateController::computeVelocityCommandsStopRotate(geometry_msg
   } else {
     ROS_DEBUG("Angle: %f Tolerance: %f", angle, limits.yaw_goal_tolerance);
     tf::Stamped<tf::Pose> robot_vel;
+    
+    //基于里程计获取小车速度
     odom_helper_.getRobotVel(robot_vel);
     nav_msgs::Odometry base_odom;
     odom_helper_.getOdom(base_odom);

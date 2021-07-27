@@ -44,25 +44,32 @@ class LocalPlannerLimits
 {
 public:
 
-  double max_trans_vel;
-  double min_trans_vel;
-  double max_vel_x;
-  double min_vel_x;
-  double max_vel_y;
-  double min_vel_y;
-  double max_rot_vel;
-  double min_rot_vel;
-  double acc_lim_x;
-  double acc_lim_y;
-  double acc_lim_theta;
+  //DWA采用的是绝对值
+  double max_trans_vel;　//器人最大平移速度的绝对值，单位为 m/s
+  double min_trans_vel; //机器人最小平移速度的绝对值，单位为 m/s
+
+  double max_vel_x; //x方向最大线速度绝对值，单位:米/秒
+  double min_vel_x; //x方向最小线速度绝对值，单位:米/秒。如果为负值表示可以后退
+
+  double max_vel_y; //y方向最大线速度绝对值，单位:米/秒
+  double min_vel_y; //y方向最小线速度绝对值，单位:米/秒
+
+  double max_rot_vel; //机器人的最大旋转角速度的绝对值，单位为 rad/s 
+  double min_rot_vel; //机器人的最小旋转角速度的绝对值，单位为 rad/s
+
+  double acc_lim_x; //机器人在x方向的加速度限制，单位为 meters/sec^2
+  double acc_lim_y;　//机器人在y方向的加速度限制，单位为 meters/sec^2
+  double acc_lim_theta; //机器人的旋转加速度限制，单位为 rad/sec^2
   double acc_limit_trans;
 //  double jerk_lim_trans;
 //  double jerk_lim_rot;
   bool   prune_plan;
-  double xy_goal_tolerance;
-  double yaw_goal_tolerance;
-  double trans_stopped_vel;
-  double rot_stopped_vel;
+  double xy_goal_tolerance; //到到目标点时，控制器在x和y方向上的容差（tolerence）（米）。即：到达目标点时,在xy平面内与目标点的距离误差
+  double yaw_goal_tolerance; //到达目标点时，控制器在偏航/旋转时的弧度容差(tolerance)。即：到达目标点时偏行角允许的误差，单位弧度
+
+  double trans_stopped_vel; //机器人被认属于“停止”状态时的平移速度。如果机器人的速度低于该值，则认为机器人已停止。单位为 m/s
+  double rot_stopped_vel; //机器人被认属于“停止”状态时的旋转速度。单位为 rad/s
+
   bool   restore_defaults;
 
   LocalPlannerLimits() {}

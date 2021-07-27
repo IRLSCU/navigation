@@ -53,6 +53,7 @@ bool LatchedStopRotateController::isPositionReached(LocalPlannerUtil* planner_ut
   //check to see if we've reached the goal position
   //一般都为false，如果为true是什么意思呢？就是当进入xy_goal_tolerance范围内后会设置一个锁
   //此后即使在旋转调整yaw的过程中跳出xy_goal_tolerance，也不会进行xy上的调整。
+  //设置为true时表示：如果到达容错距离内,机器人就会原地旋转；即使转动是会跑出容错距离外
   if ((latch_xy_goal_tolerance_ && xy_tolerance_latch_) ||
       base_local_planner::getGoalPositionDistance(global_pose, goal_x, goal_y) <= xy_goal_tolerance) {
     xy_tolerance_latch_ = true;
@@ -132,14 +133,21 @@ bool LatchedStopRotateController::stopWithAccLimits(const tf::Stamped<tf::Pose>&
 
   //slow down with the maximum possible acceleration... we should really use the frequency that we're running at to determine what is feasible
   //but we'll use a tenth of a second to be consistent with the implementation of the local planner.
+
+  //robot_vel.getOrigin().x() = 当前小车速度.linear.x?　
+  //acc_lim[0]ｘ方向上的加速度限制、acc_lim[1]ｙ方向上的加速度限制
+  //sign()来控制正向或者反向
   double vx = sign(robot_vel.getOrigin().x()) * std::max(0.0, (fabs(robot_vel.getOrigin().x()) - acc_lim[0] * sim_period));
   double vy = sign(robot_vel.getOrigin().y()) * std::max(0.0, (fabs(robot_vel.getOrigin().y()) - acc_lim[1] * sim_period));
 
-  double vel_yaw = tf::getYaw(robot_vel.getRotation());
+  double vel_yaw = tf::getYaw(robot_vel.getRotation());　//获取旋转参数、acc_lim[2]旋转加速度先
   double vth = sign(vel_yaw) * std::max(0.0, (fabs(vel_yaw) - acc_lim[2] * sim_period));
 
   //we do want to check whether or not the command is valid
   double yaw = tf::getYaw(global_pose.getRotation());
+
+  //调用DWAPlanner::checkTrajectory
+  //Eigen::Vector3f(1,2,3)，列向量[1 2 3]
   bool valid_cmd = obstacle_check(Eigen::Vector3f(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), yaw),
                                   Eigen::Vector3f(robot_vel.getOrigin().getX(), robot_vel.getOrigin().getY(), vel_yaw),
                                   Eigen::Vector3f(vx, vy, vth));
@@ -159,6 +167,19 @@ bool LatchedStopRotateController::stopWithAccLimits(const tf::Stamped<tf::Pose>&
   return false;
 }
 
+/**
+ * @brief 
+ * @param  global_pose      小车当前位资
+ * @param  robot_vel        小车当前速度
+ * @param  goal_th          获得目标点位资的角度
+ * @param  cmd_vel          待计算的小车速度控制指令
+ * @param  acc_lim          小车加速度限制
+ * @param  sim_period       前向模拟时间
+ * @param  limits           参数配置的对象引用 base_local_planner::LocalPlannerLimits
+ * @param  obstacle_check   调用DWAPlanner::checkTrajectory
+ * @return true 
+ * @return false 
+ */
 bool LatchedStopRotateController::rotateToGoal(
     const tf::Stamped<tf::Pose>& global_pose,
     const tf::Stamped<tf::Pose>& robot_vel,
@@ -174,14 +195,16 @@ bool LatchedStopRotateController::rotateToGoal(
   double vel_yaw = tf::getYaw(robot_vel.getRotation());
   cmd_vel.linear.x = 0;
   cmd_vel.linear.y = 0;
+  //获得最短的角度差异
   double ang_diff = angles::shortest_angular_distance(yaw, goal_th);
-
+  //获取能达到的最大旋转角速度
   double v_theta_samp = std::min(limits.max_rot_vel, std::max(limits.min_rot_vel, fabs(ang_diff)));
 
   //take the acceleration limits of the robot into account
+  //考虑加速度的旋转角速度
   double max_acc_vel = fabs(vel_yaw) + acc_lim[2] * sim_period;
   double min_acc_vel = fabs(vel_yaw) - acc_lim[2] * sim_period;
-
+  //考虑加速度基础下，能达到的最大旋转角速度
   v_theta_samp = std::min(std::max(fabs(v_theta_samp), min_acc_vel), max_acc_vel);
 
   //we also want to make sure to send a velocity that allows us to stop when we reach the goal given our acceleration limits
@@ -265,6 +288,7 @@ bool LatchedStopRotateController::computeVelocityCommandsStopRotate(geometry_msg
     //基于里程计获取小车速度
     odom_helper_.getRobotVel(robot_vel);
     nav_msgs::Odometry base_odom;
+    //获取里程计信息
     odom_helper_.getOdom(base_odom);
 
     //if we're not stopped yet... we want to stop... taking into account the acceleration limits of the robot

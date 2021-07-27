@@ -67,10 +67,10 @@ void SimpleTrajectoryGenerator::initialise(
   /*
    * We actually generate all velocity sample vectors here, from which to generate trajectories later on
    */
-  double max_vel_th = limits->max_rot_vel;
+  double max_vel_th = limits->max_rot_vel; //机器人的最大旋转角速度的绝对值，单位为 rad/s
   double min_vel_th = -1.0 * max_vel_th;
-  discretize_by_time_ = discretize_by_time;
-  Eigen::Vector3f acc_lim = limits->getAccLimits();
+  discretize_by_time_ = discretize_by_time; //默认为false
+  Eigen::Vector3f acc_lim = limits->getAccLimits();　//获取(x, y, 旋转速度)加速度限制向量
   pos_ = pos;
   vel_ = vel;
   limits_ = limits;
@@ -85,13 +85,16 @@ void SimpleTrajectoryGenerator::initialise(
   // if sampling number is zero in any dimension, we don't generate samples generically
   if (vsamples[0] * vsamples[1] * vsamples[2] > 0) {
     //compute the feasible velocity space based on the rate at which we run
+    //初始化０向量
     Eigen::Vector3f max_vel = Eigen::Vector3f::Zero();
     Eigen::Vector3f min_vel = Eigen::Vector3f::Zero();
 
     if ( ! use_dwa_) {
       // there is no point in overshooting the goal, and it also may break the
       // robot behavior, so we limit the velocities to those that do not overshoot in sim_time
-      double dist = hypot(goal[0] - pos[0], goal[1] - pos[1]);
+      //获取当前小车到目标点的距离
+      double dist = hypot(goal[0] - pos[0], goal[1] - pos[1]); //返回传递的参数平方和的平方根(根据勾股定理)
+
       max_vel_x = std::max(std::min(max_vel_x, dist / sim_time_), min_vel_x);
       max_vel_y = std::max(std::min(max_vel_y, dist / sim_time_), min_vel_y);
 
@@ -104,7 +107,7 @@ void SimpleTrajectoryGenerator::initialise(
       min_vel[1] = std::max(min_vel_y, vel[1] - acc_lim[1] * sim_time_);
       min_vel[2] = std::max(min_vel_th, vel[2] - acc_lim[2] * sim_time_);
     } else {
-      // with dwa do not accelerate beyond the first step, we only sample within velocities we reach in sim_period
+      // with dwa do not accelerate beyond the first step,we only sample within velocities we reach in sim_period
       max_vel[0] = std::min(max_vel_x, vel[0] + acc_lim[0] * sim_period_);
       max_vel[1] = std::min(max_vel_y, vel[1] + acc_lim[1] * sim_period_);
       max_vel[2] = std::min(max_vel_th, vel[2] + acc_lim[2] * sim_period_);
@@ -114,6 +117,7 @@ void SimpleTrajectoryGenerator::initialise(
       min_vel[2] = std::max(min_vel_th, vel[2] - acc_lim[2] * sim_period_);
     }
 
+    //获取速度样本
     Eigen::Vector3f vel_samp = Eigen::Vector3f::Zero();
     VelocityIterator x_it(min_vel[0], max_vel[0], vsamples[0]);
     VelocityIterator y_it(min_vel[1], max_vel[1], vsamples[1]);

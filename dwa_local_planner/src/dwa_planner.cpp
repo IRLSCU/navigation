@@ -217,20 +217,35 @@ namespace dwa_local_planner {
    * This function is used when other strategies are to be applied,
    * but the cost functions for obstacles are to be reused.
    */
+  
+  /**
+   * @brief 检查轨迹对于位置/速度对是否合法
+   * @param  pos              小车当前位置
+   * @param  vel              小车的速度
+   * @param  vel_samples      取样的速度
+   * @return true 
+   * @return false 
+   */
   bool DWAPlanner::checkTrajectory(
       Eigen::Vector3f pos,
       Eigen::Vector3f vel,
       Eigen::Vector3f vel_samples){
-    oscillation_costs_.resetOscillationFlags();
+    oscillation_costs_.resetOscillationFlags();　//重置障碍物标志
+
     base_local_planner::Trajectory traj;
-    geometry_msgs::PoseStamped goal_pose = global_plan_.back();
+    
+    geometry_msgs::PoseStamped goal_pose = global_plan_.back();　//取得局部路径的目标点位资
+
+    //构建goal列向量
     Eigen::Vector3f goal(goal_pose.pose.position.x, goal_pose.pose.position.y, tf::getYaw(goal_pose.pose.orientation));
     base_local_planner::LocalPlannerLimits limits = planner_util_->getCurrentLimits();
-    generator_.initialise(pos,
-        vel,
-        goal,
-        &limits,
-        vsamples_);
+
+    // base_local_planner::SimpleTrajectoryGenerator generator_
+    generator_.initialise(pos,　//小车当前位置向量
+        vel,　//小车当前速度向量
+        goal,　//局部目标位资向量
+        &limits, //局部规划器限制参数的对象引用
+        vsamples_); //(x,y,角速度)的取样数向量
     generator_.generateTrajectory(pos, vel, vel_samples, traj);
     double cost = scored_sampling_planner_.scoreTrajectory(traj, -1);
     //if the trajectory is a legal one... the check passes

@@ -178,8 +178,13 @@ bool SimpleTrajectoryGenerator::nextTrajectory(Trajectory &comp_traj) {
 }
 
 /**
- * @param pos current position of robot
- * @param vel desired velocity for sampling
+ * @brief 
+ * 
+ * @param pos 小车当前位置
+ * @param vel 小车当前速度
+ * @param sample_target_vel 取样的速度 
+ * @param traj 待构建的轨迹对象
+ * @return bool 
  */
 bool SimpleTrajectoryGenerator::generateTrajectory(
       Eigen::Vector3f pos,
@@ -205,28 +210,30 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
 
   int num_steps;
   if (discretize_by_time_) {
-    num_steps = ceil(sim_time_ / sim_granularity_);
+    num_steps = ceil(sim_time_ / sim_granularity_); //返回大于该数的最小整数
   } else {
     //compute the number of steps we must take along this trajectory to be "safe"
+    //前向模拟距离
     double sim_time_distance = vmag * sim_time_; // the distance the robot would travel in sim_time if it did not change velocity
+    //模拟角度
     double sim_time_angle = fabs(sample_target_vel[2]) * sim_time_; // the angle the robot would rotate in sim_time
     num_steps =
         ceil(std::max(sim_time_distance / sim_granularity_,
             sim_time_angle    / angular_sim_granularity_));
   }
 
-  //compute a timestep
+  //compute a timestep 单位步长
   double dt = sim_time_ / num_steps;
   traj.time_delta_ = dt;
 
   Eigen::Vector3f loop_vel;
-  if (continued_acceleration_) {
+  if (continued_acceleration_) { //不使用DWA
     // assuming the velocity of the first cycle is the one we want to store in the trajectory object
     loop_vel = computeNewVelocities(sample_target_vel, vel, limits_->getAccLimits(), dt);
     traj.xv_     = loop_vel[0];
     traj.yv_     = loop_vel[1];
     traj.thetav_ = loop_vel[2];
-  } else {
+  } else {//使用DWA
     // assuming sample_vel is our target velocity within acc limits for one timestep
     loop_vel = sample_target_vel;
     traj.xv_     = sample_target_vel[0];
@@ -254,10 +261,18 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
   return num_steps > 0; // true if trajectory has at least one point
 }
 
+/**
+ * @brief 
+ * 
+ * @param pos 小车的当前位置
+ * @param vel 小车的当前速度
+ * @param dt 每一步的前向模拟距离
+ * @return Eigen::Vector3f 
+ */
 Eigen::Vector3f SimpleTrajectoryGenerator::computeNewPositions(const Eigen::Vector3f& pos,
     const Eigen::Vector3f& vel, double dt) {
   Eigen::Vector3f new_pos = Eigen::Vector3f::Zero();
-  new_pos[0] = pos[0] + (vel[0] * cos(pos[2]) + vel[1] * cos(M_PI_2 + pos[2])) * dt;
+  new_pos[0] = pos[0] + (vel[0] * cos(pos[2]) + vel[1] * cos(M_PI_2 + pos[2])) * dt; //pos[2]偏航角度
   new_pos[1] = pos[1] + (vel[0] * sin(pos[2]) + vel[1] * sin(M_PI_2 + pos[2])) * dt;
   new_pos[2] = pos[2] + vel[2] * dt;
   return new_pos;
@@ -265,6 +280,16 @@ Eigen::Vector3f SimpleTrajectoryGenerator::computeNewPositions(const Eigen::Vect
 
 /**
  * change vel using acceleration limits to converge towards sample_target-vel
+ */
+
+/**
+ * @brief 
+ * 
+ * @param sample_target_vel 取样的速度
+ * @param vel 小车当前的速度
+ * @param acclimits 相关限制类的对象
+ * @param dt 每一步的前向模拟距离
+ * @return Eigen::Vector3f 
  */
 Eigen::Vector3f SimpleTrajectoryGenerator::computeNewVelocities(const Eigen::Vector3f& sample_target_vel,
     const Eigen::Vector3f& vel, Eigen::Vector3f acclimits, double dt) {

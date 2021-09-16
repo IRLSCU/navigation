@@ -42,7 +42,7 @@
 namespace base_local_planner {
 
   SimpleScoredSamplingPlanner::SimpleScoredSamplingPlanner(std::vector<TrajectorySampleGenerator*> gen_list, std::vector<TrajectoryCostFunction*>& critics, int max_samples) {
-    max_samples_ = max_samples;
+    max_samples_ = max_samples; //默认为-1
     gen_list_ = gen_list;
     critics_ = critics;
   }

@@ -3,5 +3,6 @@
         "functional": "cpp",
         "*.ipp": "cpp",
         "core": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }

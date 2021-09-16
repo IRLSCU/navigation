@@ -157,7 +157,7 @@ namespace dwa_local_planner {
     obstacle_costs_.setSumScores(sum_scores);
 
 
-    private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false);
+    private_nh.param("publish_cost_grid_pc", publish_cost_grid_pc_, false); //是否发布计算后的cost话题，即是否将代价值进行可视化显示
     map_viz_.initialize(name, planner_util->getGlobalFrame(), boost::bind(&DWAPlanner::getCellCosts, this, _1, _2, _3, _4, _5, _6));
 
     std::string frame_id;
@@ -166,7 +166,7 @@ namespace dwa_local_planner {
     traj_cloud_ = new pcl::PointCloud<base_local_planner::MapGridCostPoint>;
     traj_cloud_->header.frame_id = frame_id;
     traj_cloud_pub_.advertise(private_nh, "trajectory_cloud", 1);
-    private_nh.param("publish_traj_pc", publish_traj_pc_, false);
+    private_nh.param("publish_traj_pc", publish_traj_pc_, false); //是否讲规划的路径轨迹在RVIZ上进行可视化
 
     // set up all the cost functions that will be applied in order
     // (any function returning negative values will abort scoring, so the order can improve performance)
@@ -328,13 +328,22 @@ namespace dwa_local_planner {
   /*
    * given the current state of the robot, find a good trajectory
    */
+
+  /**
+   * @brief 
+   * 
+   * @param global_pose 小车当前的位姿
+   * @param global_vel 小车当前速度
+   * @param drive_velocities 待计算的行进速度
+   * @return base_local_planner::Trajectory 
+   */
   base_local_planner::Trajectory DWAPlanner::findBestPath(
       tf::Stamped<tf::Pose> global_pose,
       tf::Stamped<tf::Pose> global_vel,
       tf::Stamped<tf::Pose>& drive_velocities) {
 
     //make sure that our configuration doesn't change mid-run
-    boost::mutex::scoped_lock l(configuration_mutex_);
+    boost::mutex::scoped_lock l(configuration_mutex_); //上锁
 
     Eigen::Vector3f pos(global_pose.getOrigin().getX(), global_pose.getOrigin().getY(), tf::getYaw(global_pose.getRotation()));
     Eigen::Vector3f vel(global_vel.getOrigin().getX(), global_vel.getOrigin().getY(), tf::getYaw(global_vel.getRotation()));
@@ -352,8 +361,12 @@ namespace dwa_local_planner {
     result_traj_.cost_ = -7;
     // find best trajectory by sampling and scoring the samples
     std::vector<base_local_planner::Trajectory> all_explored;
+
+    //scored_sampling_planner_ = base_local_planner::SimpleScoredSamplingPlanner(generator_list, critics);
+    //初始化成员变量critics_、gen_list_
     scored_sampling_planner_.findBestTrajectory(result_traj_, &all_explored);
 
+    //对规划的路径轨迹进行可视化显示
     if(publish_traj_pc_)
     {
         base_local_planner::MapGridCostPoint pt;

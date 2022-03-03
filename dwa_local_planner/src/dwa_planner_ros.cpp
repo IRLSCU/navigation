@@ -291,7 +291,7 @@ namespace dwa_local_planner {
     if (latchedStopRotateController_.isPositionReached(&planner_util_, current_pose_)) {
       //publish an empty plan because we've reached our goal position
       std::vector<geometry_msgs::PoseStamped> local_plan;
-      std::vector<geometry_msgs::PoseStamped> transformed_plan;
+      std::vector<geometry_msgs::PoseStamped> transformed_plan; //覆盖前面由全局路径填充的路径，此时为空
       publishGlobalPlan(transformed_plan);
       publishLocalPlan(local_plan);
       base_local_planner::LocalPlannerLimits limits = planner_util_.getCurrentLimits();　//获得参数配置信息

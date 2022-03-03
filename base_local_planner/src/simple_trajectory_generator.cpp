@@ -195,7 +195,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
   double eps = 1e-4;
   traj.cost_   = -1.0; // placed here in case we return early
   //trajectory might be reused so we'll make sure to reset it
-  traj.resetPoints();
+  traj.resetPoints(); //清空轨迹中的路径点
 
   // make sure that the robot would at least be moving with one of
   // the required minimum velocities for translation and rotation (if set)
@@ -222,7 +222,7 @@ bool SimpleTrajectoryGenerator::generateTrajectory(
             sim_time_angle    / angular_sim_granularity_));
   }
 
-  //compute a timestep 单位步长
+  //compute a timestep 单位步长时间
   double dt = sim_time_ / num_steps;
   traj.time_delta_ = dt;
 

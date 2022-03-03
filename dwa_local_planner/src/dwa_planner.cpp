@@ -181,7 +181,7 @@ namespace dwa_local_planner {
 
     // trajectory generators
     std::vector<base_local_planner::TrajectorySampleGenerator*> generator_list;
-    generator_list.push_back(&generator_);
+    generator_list.push_back(&generator_); //压入类对象
 
     scored_sampling_planner_ = base_local_planner::SimpleScoredSamplingPlanner(generator_list, critics);
 
@@ -406,6 +406,7 @@ namespace dwa_local_planner {
     oscillation_costs_.updateOscillationFlags(pos, &result_traj_, planner_util_->getCurrentLimits().min_trans_vel);
 
     //if we don't have a legal trajectory, we'll just command zero
+    //设置速度指令
     if (result_traj_.cost_ < 0) {
       drive_velocities.setIdentity();
     } else {

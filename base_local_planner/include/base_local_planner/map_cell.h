@@ -56,6 +56,7 @@ namespace base_local_planner {
 
       unsigned int cx, cy; ///< @brief Cell index in the grid map
 
+      //默认是DBL_MAX
       double target_dist; ///< @brief Distance to planner's path
 
       bool target_mark; ///< @brief Marks for computing path/goal distances

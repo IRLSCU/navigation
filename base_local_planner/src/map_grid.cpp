@@ -42,12 +42,19 @@ namespace base_local_planner{
   {
   }
 
+  /**
+   * @brief Construct a new Map Grid:: Map Grid object
+   * 
+   * @param size_x costmap->getSizeInCellsX()
+   * @param size_y costmap->getSizeInCellsY()
+   */
   MapGrid::MapGrid(unsigned int size_x, unsigned int size_y) 
     : size_x_(size_x), size_y_(size_y)
   {
     commonInit();
   }
 
+  //初始化时拷贝对象
   MapGrid::MapGrid(const MapGrid& mg){
     size_y_ = mg.size_y_;
     size_x_ = mg.size_x_;
@@ -73,7 +80,7 @@ namespace base_local_planner{
   size_t MapGrid::getIndex(int x, int y){
     return size_x_ * y + x;
   }
-
+  //拷贝
   MapGrid& MapGrid::operator= (const MapGrid& mg){
     size_y_ = mg.size_y_;
     size_x_ = mg.size_x_;
@@ -105,7 +112,7 @@ namespace base_local_planner{
 
     //if the cell is an obstacle set the max path distance
     unsigned char cost = costmap.getCost(check_cell->cx, check_cell->cy);
-    if(! getCell(check_cell->cx, check_cell->cy).within_robot &&
+    if(! getCell(check_cell->cx, check_cell->cy).within_robot && //保证不在小车体积范围内
         (cost == costmap_2d::LETHAL_OBSTACLE ||
          cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE ||
          cost == costmap_2d::NO_INFORMATION)){
@@ -115,7 +122,7 @@ namespace base_local_planner{
 
     double new_target_dist = current_cell->target_dist + 1;
     if (new_target_dist < check_cell->target_dist) {
-      check_cell->target_dist = new_target_dist;
+      check_cell->target_dist = new_target_dist; //更新到达check_cell网格的更小代价
     }
     return true;
   }
@@ -124,12 +131,19 @@ namespace base_local_planner{
   //reset the path_dist and goal_dist fields for all cells
   void MapGrid::resetPathDist(){
     for(unsigned int i = 0; i < map_.size(); ++i) {
-      map_[i].target_dist = unreachableCellCosts();
+      map_[i].target_dist = unreachableCellCosts(); //map_.size() + 1;
       map_[i].target_mark = false;
       map_[i].within_robot = false;
     }
   }
 
+  /**
+   * @brief 
+   * 
+   * @param global_plan_in 局部规划器填充的路径
+   * @param global_plan_out 待填充的适应于分辨率的路径
+   * @param resolution 代价地图分辨率
+   */
   void MapGrid::adjustPlanResolution(const std::vector<geometry_msgs::PoseStamped>& global_plan_in,
       std::vector<geometry_msgs::PoseStamped>& global_plan_out, double resolution) {
     if (global_plan_in.size() == 0) {
@@ -146,7 +160,7 @@ namespace base_local_planner{
       double loop_y = global_plan_in[i].pose.position.y;
       double sqdist = (loop_x - last_x) * (loop_x - last_x) + (loop_y - last_y) * (loop_y - last_y);
       if (sqdist > min_sq_resolution) {
-        int steps = ceil((sqrt(sqdist)) / resolution);
+        int steps = ceil((sqrt(sqdist)) / resolution); //上取整函数
         // add a points in-between
         double deltax = (loop_x - last_x) / steps;
         double deltay = (loop_y - last_y) / steps;
@@ -168,6 +182,12 @@ namespace base_local_planner{
   }
 
   //update what map cells are considered path based on the global_plan
+  /**
+   * @brief 
+   * 
+   * @param costmap 代价地图planner_util->getCostmap()
+   * @param global_plan 局部规划器填充的路径
+   */
   void MapGrid::setTargetCells(const costmap_2d::Costmap2D& costmap,
       const std::vector<geometry_msgs::PoseStamped>& global_plan) {
     sizeCheck(costmap.getSizeInCellsX(), costmap.getSizeInCellsY());
@@ -177,7 +197,7 @@ namespace base_local_planner{
     queue<MapCell*> path_dist_queue;
 
     std::vector<geometry_msgs::PoseStamped> adjusted_global_plan;
-    adjustPlanResolution(global_plan, adjusted_global_plan, costmap.getResolution());
+    adjustPlanResolution(global_plan, adjusted_global_plan, costmap.getResolution()); //填充为新的适应分辨率的路径
     if (adjusted_global_plan.size() != global_plan.size()) {
       ROS_DEBUG("Adjusted global plan resolution, added %zu points", adjusted_global_plan.size() - global_plan.size());
     }
@@ -188,7 +208,7 @@ namespace base_local_planner{
       double g_y = adjusted_global_plan[i].pose.position.y;
       unsigned int map_x, map_y;
       if (costmap.worldToMap(g_x, g_y, map_x, map_y) && costmap.getCost(map_x, map_y) != costmap_2d::NO_INFORMATION) {
-        MapCell& current = getCell(map_x, map_y);
+        MapCell& current = getCell(map_x, map_y); //mapCell - map_[size_x_ * y + x] 
         current.target_dist = 0.0;
         current.target_mark = true;
         path_dist_queue.push(&current);
@@ -263,6 +283,7 @@ namespace base_local_planner{
 
       dist_queue.pop();
 
+      //上、下、左、右的网格进行处理
       if(current_cell->cx > 0){
         check_cell = current_cell - 1;
         if(!check_cell->target_mark){

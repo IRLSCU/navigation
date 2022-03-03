@@ -45,7 +45,7 @@ MapGridCostFunction::MapGridCostFunction(costmap_2d::Costmap2D* costmap,
     bool is_local_goal_function,
     CostAggregationType aggregationType) :
     costmap_(costmap),
-    map_(costmap->getSizeInCellsX(), costmap->getSizeInCellsY()),
+    map_(costmap->getSizeInCellsX(), costmap->getSizeInCellsY()), //x,y初始化map_grid
     aggregationType_(aggregationType),
     xshift_(xshift),
     yshift_(yshift),
@@ -53,7 +53,7 @@ MapGridCostFunction::MapGridCostFunction(costmap_2d::Costmap2D* costmap,
     stop_on_failure_(true) {}
 
 void MapGridCostFunction::setTargetPoses(std::vector<geometry_msgs::PoseStamped> target_poses) {
-  target_poses_ = target_poses;
+  target_poses_ = target_poses; //局部规划器填充的路径点
 }
 
 bool MapGridCostFunction::prepare() {
@@ -68,13 +68,13 @@ bool MapGridCostFunction::prepare() {
 }
 
 double MapGridCostFunction::getCellCosts(unsigned int px, unsigned int py) {
-  double grid_dist = map_(px, py).target_dist;
-  return grid_dist;
+  double grid_dist = map_(px, py).target_dist; //std::vector<MapCell> map_;   map_[size_x_ * y + x]   target_dist
+  return grid_dist;                            
 }
 
 double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
   double cost = 0.0;
-  if (aggregationType_ == Product) {
+  if (aggregationType_ == Product) { //aggregationType_ 一直是默认的Last
     cost = 1.0;
   }
   double px, py, pth;
@@ -85,12 +85,12 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
     traj.getPoint(i, px, py, pth);
 
     // translate point forward if specified
-    if (xshift_ != 0.0) {
+    if (xshift_ != 0.0) { //在dwa.planner.cpp中goal_front_costs_.setXshift(forward_point_distance_)改变过，只有这一个对象改变过
       px = px + xshift_ * cos(pth);
       py = py + xshift_ * sin(pth);
     }
     // translate point sideways if specified
-    if (yshift_ != 0.0) {
+    if (yshift_ != 0.0) { //一直是默认的0.0
       px = px + yshift_ * cos(pth + M_PI_2);
       py = py + yshift_ * sin(pth + M_PI_2);
     }
@@ -111,7 +111,7 @@ double MapGridCostFunction::scoreTrajectory(Trajectory &traj) {
       }
     }
 
-    switch( aggregationType_ ) {
+    switch( aggregationType_ ) { //一直是默认的Last，不曾改变
     case Last:
       cost = grid_dist;
       break;

@@ -972,7 +972,7 @@ namespace move_base {
                            cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z );
           last_valid_control_ = ros::Time::now();
           //make sure that we send the velocity command to the base
-          vel_pub_.publish(cmd_vel);
+          vel_pub_.publish(cmd_vel); //发布速度指令
           if(recovery_trigger_ == CONTROLLING_R)
             recovery_index_ = 0;
         }

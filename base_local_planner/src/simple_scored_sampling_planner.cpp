@@ -56,7 +56,7 @@ namespace base_local_planner {
         gen_id++;
         continue;
       }
-      double cost = score_function_p->scoreTrajectory(traj);
+      double cost = score_function_p->scoreTrajectory(traj); //多态，分别调用子类的scoreTrajectory()函数计算
       if (cost < 0) {
         ROS_DEBUG("Velocity %.3lf, %.3lf, %.3lf discarded by cost function  %d with cost: %f", traj.xv_, traj.yv_, traj.thetav_, gen_id, cost);
         traj_cost = cost;
@@ -92,7 +92,7 @@ namespace base_local_planner {
         return false;
       }
     }
-
+    //gen_list_.size() == 1
     for (std::vector<TrajectorySampleGenerator*>::iterator loop_gen = gen_list_.begin(); loop_gen != gen_list_.end(); ++loop_gen) {
       count = 0;
       count_valid = 0;
@@ -103,7 +103,8 @@ namespace base_local_planner {
           // TODO use this for debugging
           continue;
         }
-        loop_traj_cost = scoreTrajectory(loop_traj, best_traj_cost);
+        loop_traj_cost = scoreTrajectory(loop_traj, best_traj_cost); //计算相应的代价
+        //all_explored一直都不是 NULL
         if (all_explored != NULL) {
           loop_traj.cost_ = loop_traj_cost;
           all_explored->push_back(loop_traj);
@@ -111,13 +112,13 @@ namespace base_local_planner {
 
         if (loop_traj_cost >= 0) {
           count_valid++;
-          if (best_traj_cost < 0 || loop_traj_cost < best_traj_cost) {
+          if (best_traj_cost < 0 || loop_traj_cost < best_traj_cost) { //更新最小代价、代价最小路径
             best_traj_cost = loop_traj_cost;
             best_traj = loop_traj;
           }
         }
         count++;
-        if (max_samples_ > 0 && count >= max_samples_) {
+        if (max_samples_ > 0 && count >= max_samples_) { //max_samples_默认为-1，不会进入该判断
           break;
         }
       }

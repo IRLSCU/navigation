@@ -151,7 +151,7 @@ namespace base_local_planner {
       while(i < (unsigned int)global_plan.size() && sq_dist <= sq_dist_threshold) {
         const geometry_msgs::PoseStamped& pose = global_plan[i];
         poseStampedMsgToTF(pose, tf_pose);
-        tf_pose.setData(plan_to_global_transform * tf_pose);
+        tf_pose.setData(plan_to_global_transform * tf_pose); //坐标转换
         tf_pose.stamp_ = plan_to_global_transform.stamp_;
         tf_pose.frame_id_ = global_frame;
         poseStampedTFToMsg(tf_pose, newer_pose);
